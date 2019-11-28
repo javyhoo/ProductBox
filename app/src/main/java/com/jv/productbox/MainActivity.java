@@ -2,6 +2,9 @@ package com.jv.productbox;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -36,6 +39,20 @@ public class MainActivity extends AppCompatActivity {
         });
 
         initListView();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Intent intent = new Intent(this, SearchActivity.class);
+        this.startActivity(intent);
+
+        return super.onOptionsItemSelected(item);
     }
 
     private void initListView() {
