@@ -1,13 +1,21 @@
 package com.jv.productbox;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.skateboard.zxinglib.CaptureActivity;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -36,10 +44,21 @@ public class AddActivity extends AppCompatActivity {
 
         ButterKnife.bind(this);
 
+        final RxPermissions rxPermissions = new RxPermissions(this);
+
         llBarcode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //todo
+                rxPermissions
+                        .request(Manifest.permission.CAMERA)
+                        .subscribe(granted -> {
+                            if (granted) { // Always true pre-M
+                                Intent intent = new Intent(AddActivity.this, CaptureActivity.class);
+                                startActivityForResult(intent, 1001);
+                            } else {
+                                Toast.makeText(AddActivity.this, "扫描条形码需要相机权限，请开启权限！", Toast.LENGTH_SHORT).show();
+                            }
+                        });
             }
         });
 
@@ -62,5 +81,17 @@ public class AddActivity extends AppCompatActivity {
 
     private void saveProductToServer() {
         //todo
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1001 && resultCode == Activity.RESULT_OK) {
+            String result = data.getStringExtra(CaptureActivity.KEY_DATA);
+            Toast.makeText(this, "扫描成功： " + result, Toast.LENGTH_SHORT).show();
+
+            tvBarcode.setText(result);
+        }
     }
 }

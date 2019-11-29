@@ -1,2 +1,3 @@
 include ':app'
+include ':zxinglib'
 rootProject.name='ProductBox'
