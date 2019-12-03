@@ -16,9 +16,6 @@ import butterknife.ButterKnife;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    public static final String TAG_ACCOUNT_ROLE = "tag_account_role";
-    private int role;
-
     @BindView(R.id.et_account)
     EditText etAccount;
     @BindView(R.id.et_psw)
@@ -36,9 +33,8 @@ public class RegisterActivity extends AppCompatActivity {
 
         getSupportActionBar().setTitle("注册账号");
 
-        role = getIntent().getIntExtra(TAG_ACCOUNT_ROLE, 2);   //默认为查询人员
 
-        tvRole.setText(role == 1 ? "管理员" : "查询人员");
+        tvRole.setText(App.user.getRoid() == 1 ? "管理员" : "查询人员");
 
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -13,6 +13,11 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.luck.picture.lib.engine.ImageEngine;
 
+/**
+ * @author：luck
+ * @date：2019-11-13 17:02
+ * @describe：Glide加载引擎
+ */
 public class GlideEngine implements ImageEngine {
 
     @Override

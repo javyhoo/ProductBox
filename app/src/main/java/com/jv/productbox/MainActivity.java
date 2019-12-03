@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -24,11 +25,9 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.recycler_product)
     XRecyclerView listProduct;
 
-    public static final String TAG_ACCOUNT_ROLE = "tag_account_role";
     private ProductListAdapter mAdapter;
     private List<Product> products = new ArrayList<>();
     private int times = 0;
-    private int role;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         getSupportActionBar().setTitle("产品列表");
-        role = getIntent().getIntExtra(TAG_ACCOUNT_ROLE, 2);   //默认为查询人员
 
         initListView();
     }
@@ -50,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         MenuItem productAdd = menu.findItem(R.id.app_bar_product_add);
         MenuItem userAdd = menu.findItem(R.id.app_bar_admin_add);
 
-        if (role == 1) {
+        if (App.user.getRoid() == 1) {
             productAdd.setVisible(true);
             userAdd.setVisible(true);
         } else {
@@ -74,12 +72,11 @@ public class MainActivity extends AppCompatActivity {
 
             case R.id.app_bar_product_add:
                 Intent intent1 = new Intent(this, AddActivity.class);
-                this.startActivity(intent1);
+                this.startActivityForResult(intent1, 1002);
                 break;
 
             case R.id.app_bar_admin_add:
                 Intent intent2 = new Intent(this, RegisterActivity.class);
-                intent2.putExtra(RegisterActivity.TAG_ACCOUNT_ROLE, 1); //管理员
                 this.startActivity(intent2);
                 break;
 
@@ -170,13 +167,36 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<Product> data = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
-            Product product = new Product();
-            product.setUser("李三" + i);
-            product.setProductname("红牛红牛" + i);
-            product.setDate("2019-11-30");
+            Product product = App.product;
+//            product.setUser("李三" + i);
+//            product.setProductname("红牛红牛" + i);
+//            product.setDate("2019-11-30");
             data.add(product);
         }
 
         return data;
+    }
+
+    long lastTime = System.currentTimeMillis();
+
+    @Override
+    public void onBackPressed() {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastTime < 1000) {
+            super.onBackPressed();
+        } else {
+            Toast.makeText(this, "再按一次退出", Toast.LENGTH_SHORT).show();
+        }
+
+        lastTime = currentTime;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == 1002) {
+            listProduct.refresh();
+        }
     }
 }

@@ -40,7 +40,6 @@ public class LoginActivity extends FragmentActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-                intent.putExtra(RegisterActivity.TAG_ACCOUNT_ROLE, 2);  //查询人员
                 LoginActivity.this.startActivity(intent);
             }
         });
@@ -60,8 +59,10 @@ public class LoginActivity extends FragmentActivity {
                     Toast.makeText(LoginActivity.this, "账号或密码为空，请检查！", Toast.LENGTH_SHORT).show();
                 } else {
                     if ("a".equals(account) && "1".equals(password)) {
+                        App.user.setAccount("a");
+                        App.user.setRoid(1);
+
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        intent.putExtra(MainActivity.TAG_ACCOUNT_ROLE, 1);
                         LoginActivity.this.startActivity(intent);
 
                         LoginActivity.this.finish();
