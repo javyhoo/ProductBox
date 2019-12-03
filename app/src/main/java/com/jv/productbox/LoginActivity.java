@@ -40,6 +40,7 @@ public class LoginActivity extends FragmentActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
+                intent.putExtra(RegisterActivity.TAG_ACCOUNT_ROLE, 2);  //查询人员
                 LoginActivity.this.startActivity(intent);
             }
         });
@@ -60,6 +61,7 @@ public class LoginActivity extends FragmentActivity {
                 } else {
                     if ("admin".equals(account) && "admin".equals(password)) {
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        intent.putExtra(MainActivity.TAG_ACCOUNT_ROLE, 1);
                         LoginActivity.this.startActivity(intent);
 
                         LoginActivity.this.finish();

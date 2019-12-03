@@ -5,13 +5,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.jcodecraeer.xrecyclerview.ProgressStyle;
 import com.jcodecraeer.xrecyclerview.XRecyclerView;
 
@@ -25,12 +23,12 @@ public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.recycler_product)
     XRecyclerView listProduct;
-    @BindView(R.id.fab_new)
-    FloatingActionButton fabNew;
 
+    public static final String TAG_ACCOUNT_ROLE = "tag_account_role";
     private ProductListAdapter mAdapter;
     private List<Product> products = new ArrayList<>();
     private int times = 0;
+    private int role;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,14 +37,7 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         getSupportActionBar().setTitle("产品列表");
-
-        fabNew.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, AddActivity.class);
-                MainActivity.this.startActivity(intent);
-            }
-        });
+        role = getIntent().getIntExtra(TAG_ACCOUNT_ROLE, 2);   //默认为查询人员
 
         initListView();
     }
@@ -54,15 +45,49 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
-        return super.onCreateOptionsMenu(menu);
+        super.onCreateOptionsMenu(menu);
+
+        MenuItem productAdd = menu.findItem(R.id.app_bar_product_add);
+        MenuItem userAdd = menu.findItem(R.id.app_bar_admin_add);
+
+        if (role == 1) {
+            productAdd.setVisible(true);
+            userAdd.setVisible(true);
+        } else {
+            productAdd.setVisible(false);
+            userAdd.setVisible(false);
+        }
+
+        return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Intent intent = new Intent(this, SearchActivity.class);
-        this.startActivity(intent);
 
-        return super.onOptionsItemSelected(item);
+        super.onOptionsItemSelected(item);
+
+        switch (item.getItemId()) {
+            case R.id.app_bar_search:
+                Intent intent = new Intent(this, SearchActivity.class);
+                this.startActivity(intent);
+                break;
+
+            case R.id.app_bar_product_add:
+                Intent intent1 = new Intent(this, AddActivity.class);
+                this.startActivity(intent1);
+                break;
+
+            case R.id.app_bar_admin_add:
+                Intent intent2 = new Intent(this, RegisterActivity.class);
+                intent2.putExtra(RegisterActivity.TAG_ACCOUNT_ROLE, 1); //管理员
+                this.startActivity(intent2);
+                break;
+
+            default:
+                break;
+        }
+        return true;
+
     }
 
     private void initListView() {

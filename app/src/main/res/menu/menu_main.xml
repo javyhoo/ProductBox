@@ -3,7 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/app_bar_search"
-        android:icon="@drawable/ic_search_black_24dp"
-        android:title="搜索"
+        android:title="搜索产品"
+        app:actionViewClass="android.widget.SearchView" />
+
+    <item
+        android:id="@+id/app_bar_product_add"
+        android:title="新增产品"
+        app:actionViewClass="android.widget.SearchView" />
+
+    <item
+        android:id="@+id/app_bar_admin_add"
+        android:title="新增用户"
         app:actionViewClass="android.widget.SearchView" />
 </menu>
