@@ -59,7 +59,7 @@ public class LoginActivity extends FragmentActivity {
                 if (TextUtils.isEmpty(account) || TextUtils.isEmpty(password)) {
                     Toast.makeText(LoginActivity.this, "账号或密码为空，请检查！", Toast.LENGTH_SHORT).show();
                 } else {
-                    if ("admin".equals(account) && "admin".equals(password)) {
+                    if ("a".equals(account) && "1".equals(password)) {
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                         intent.putExtra(MainActivity.TAG_ACCOUNT_ROLE, 1);
                         LoginActivity.this.startActivity(intent);
