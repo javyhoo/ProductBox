@@ -14,8 +14,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.google.gson.Gson;
 import com.jcodecraeer.xrecyclerview.ProgressStyle;
 import com.jcodecraeer.xrecyclerview.XRecyclerView;
-import com.jv.productbox.model.callback.Product;
 import com.jv.productbox.model.callback.ListProduct;
+import com.jv.productbox.model.callback.Product;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.model.Response;
@@ -36,6 +36,11 @@ public class MainActivity extends AppCompatActivity {
     private int times = 0;
 
     ArrayList<Product> apiData = new ArrayList<>();
+    private int searchPageNo = 1;
+    private String searchProductName = null;
+    private String searchUserName = null;
+    private String searchBeginDate = null;
+    private String searchEndDate = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.app_bar_search:
                 Intent intent = new Intent(this, SearchActivity.class);
-                this.startActivity(intent);
+                this.startActivityForResult(intent, 1003);
                 break;
 
             case R.id.app_bar_product_add:
@@ -111,13 +116,15 @@ public class MainActivity extends AppCompatActivity {
         listProduct.setLoadingListener(new XRecyclerView.LoadingListener() {
             @Override
             public void onRefresh() {
+                searchPageNo = 1;//刷新将页码标为1
+
                 times = 0;
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         products.clear(); //先要清掉数据
 
-                        List<Product> list = getProductList("1");
+                        List<Product> list = getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
                         products.addAll(list); //再将数据插入到前面
 
                         mAdapter.notifyDataSetChanged();
@@ -134,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            List<Product> list = getProductList("2");
+                            List<Product> list = getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
                             products.addAll(list); //直接将数据追加到后面
                             Toast.makeText(MainActivity.this, "加载完成，新加" + list.size() + "件产品", Toast.LENGTH_SHORT).show();
 
@@ -146,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            List<Product> list = getProductList("2");
+                            List<Product> list = getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
                             products.addAll(list); //将数据追加到后面
 
                             mAdapter.notifyDataSetChanged();
@@ -175,9 +182,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    private List<Product> getProductList(String pageNo, String productName, String userName, String beginDate, String endDate) {
-    private List<Product> getProductList(String pageNo, String... arg) {
-
+    private List<Product> getProductList(int pageNo, String productName, String userName, String beginDate, String endDate) {
         OkGo.<String>get(Constant.API_GET_PRODUCT)
                 .tag(this)
                 .params("pageno", pageNo)
@@ -228,6 +233,31 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == 1002) {
+            listProduct.refresh();
+        } else if (resultCode == 1003) {
+            String searchResult = data.getStringExtra(SearchActivity.TAG_SEARCH_RESULT);
+            String[] search = searchResult.split(";");
+
+            for (String result : search) {
+                String[] condition = result.split(":");
+                switch (condition[0]) {
+                    case "productname":
+                        searchProductName = condition[1];
+                        break;
+                    case "userid":
+                        searchUserName = condition[1];
+                        break;
+                    case "begindate":
+                        searchBeginDate = condition[1];
+                        break;
+                    case "enddate":
+                        searchEndDate = condition[1];
+                        break;
+                    default:
+                        break;
+                }
+            }
+
             listProduct.refresh();
         }
     }

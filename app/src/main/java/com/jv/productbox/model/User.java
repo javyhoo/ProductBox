@@ -20,16 +20,16 @@ public class User implements Serializable {
         this.token = token;
     }
 
-    public String getRoleid() {
+    public int getRoleid() {
         return roleid;
     }
 
-    public void setRoleid(String roleid) {
+    public void setRoleid(int roleid) {
         this.roleid = roleid;
     }
 
     private String account;
     private String token;
-    private String roleid;
+    private int roleid;
 
 }

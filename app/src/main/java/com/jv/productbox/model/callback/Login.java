@@ -10,7 +10,7 @@ public class Login {
         return token;
     }
 
-    public String getRoleid() {
+    public int getRoleid() {
         return roleid;
     }
 
@@ -20,7 +20,7 @@ public class Login {
 
     private String msg;
     private String token;
-    private String roleid;
+    private int roleid;
     private String status;
 
 }

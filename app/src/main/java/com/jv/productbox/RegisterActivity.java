@@ -30,7 +30,7 @@ public class RegisterActivity extends AppCompatActivity {
     @BindView(R.id.btn_save)
     Button btnSave;
 
-    String roleid = "2";
+    private int roleid = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,11 +40,11 @@ public class RegisterActivity extends AppCompatActivity {
 
         getSupportActionBar().setTitle("注册账号");
 
-        if (App.user != null && !TextUtils.isEmpty(App.user.getRoleid())) {
+        if (App.user != null) {
             roleid = App.user.getRoleid();
         }
 
-        tvRole.setText("1".equals(roleid) ? "管理员" : "查询人员");
+        tvRole.setText(roleid == 1 ? "管理员" : "查询人员");
 
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
