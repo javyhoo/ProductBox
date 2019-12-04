@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.fragment.app.FragmentActivity;
 
 import com.google.gson.Gson;
+import com.jv.productbox.model.User;
 import com.jv.productbox.model.callback.Login;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.StringCallback;
@@ -95,6 +96,10 @@ public class LoginActivity extends FragmentActivity {
                         if (null == login) {
                             Toast.makeText(LoginActivity.this, "数据异常，请联系管理员！", Toast.LENGTH_SHORT).show();
                         } else if ("true".equals(login.getStatus())) {
+                            if (App.user == null){
+                                App.user = new User();
+                            }
+
                             App.user.setAccount(account);
                             App.user.setRoleid(login.getRoleid());
                             App.user.setToken(login.getToken());
@@ -117,4 +122,10 @@ public class LoginActivity extends FragmentActivity {
                 });
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        OkGo.getInstance().cancelTag(this);
+    }
 }

@@ -6,6 +6,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,7 +20,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.jv.productbox.model.Product;
+import com.google.gson.Gson;
+import com.jv.productbox.model.callback.AddProduct;
+import com.jv.productbox.model.callback.ImageUrl;
 import com.luck.picture.lib.PictureSelector;
 import com.luck.picture.lib.broadcast.BroadcastAction;
 import com.luck.picture.lib.broadcast.BroadcastManager;
@@ -30,12 +34,17 @@ import com.luck.picture.lib.permissions.PermissionChecker;
 import com.luck.picture.lib.tools.PictureFileUtils;
 import com.luck.picture.lib.tools.ScreenUtils;
 import com.luck.picture.lib.tools.ToastUtils;
+import com.lzy.okgo.OkGo;
+import com.lzy.okgo.callback.StringCallback;
+import com.lzy.okgo.model.Progress;
+import com.lzy.okgo.model.Response;
+import com.lzy.okgo.request.GetRequest;
+import com.lzy.okgo.request.base.Request;
 import com.skateboard.zxinglib.CaptureActivity;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
-import java.text.SimpleDateFormat;
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import butterknife.BindView;
@@ -58,9 +67,9 @@ public class AddActivity extends AppCompatActivity {
 
     private List<LocalMedia> selectList = new ArrayList<>();
     private GridImageAdapter adapter;
-    private int maxSelectNum = 9;
-
+    private int maxSelectNum = 5;
     private RxPermissions rxPermissions;
+    private List<String> imageUrl = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,10 +124,12 @@ public class AddActivity extends AppCompatActivity {
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                saveProductToServer();
-                setResult(1002);
-
-                AddActivity.this.finish();
+                if (TextUtils.isEmpty(etName.getText().toString())) {
+                    Toast.makeText(AddActivity.this, "请输入产品名称！", Toast.LENGTH_SHORT).show();
+                } else {
+//                    saveProductToServer();
+                    uploadFile();
+                }
             }
         });
 
@@ -136,31 +147,166 @@ public class AddActivity extends AppCompatActivity {
 
     }
 
-    private void saveProductToServer() {
-        //todo
-        Product product = new Product();
-        product.setProductname(etName.getText().toString());
-        product.setBarcode(tvBarcode.getText().toString());
-        product.setDescription(etDes.getText().toString());
+//    private void saveProductToServer() {
+//        //todo
+//        Product product = new Product();
+//        product.setProductname(etName.getText().toString());
+//        product.setBarcode(tvBarcode.getText().toString());
+//        product.setDescription(etDes.getText().toString());
+//
+//        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        product.setDate(df.format(new Date()));
+//
+//        product.setUser(App.user.getAccount());
+//
+//        List<String> uris = new ArrayList<>();
+//        for (int i = 0; i < selectList.size(); i++) {
+//            LocalMedia media = selectList.get(i);
+//            if (media.isCompressed()) {
+//                uris.add(media.getCompressPath());
+//            } else {
+//                uris.add(media.getPath());
+//            }
+//        }
+//        product.setImags(uris);
+//
+//        //todo fake data
+//        App.product = product;
+//    }
 
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        product.setDate(df.format(new Date()));
+    private void addProduct() {
+        GetRequest<String> request = OkGo.<String>get(Constant.API_ADD_PRODUCT)
+                .tag("addProduct")
+                .params("token", App.user.getToken())
+                .params("productname", etName.getText().toString())
+                .params("description", etDes.getText().toString())
+                .params("barcode", tvBarcode.getText().toString());
 
-        product.setUser(App.user.getAccount());
+        for (int i = 0; i < imageUrl.size(); i++) {
+            request.params("imags", imageUrl.get(i));
+        }
 
-        List<String> uris = new ArrayList<>();
+        request.execute(new StringCallback() {
+            @Override
+            public void onSuccess(Response<String> response) {
+                Gson gson = new Gson();
+                AddProduct product = gson.fromJson(response.body(), AddProduct.class);
+
+                if (null != product) {
+                    String statusMsg;
+                    switch (product.getStatus()) {
+                        case "0":
+                            statusMsg = "新增成功";
+                            break;
+                        case "1":
+                            statusMsg = "参数缺失";
+                            break;
+                        case "2":
+                            statusMsg = "该操作需要登陆 ";
+                            break;
+                        case "3":
+                            statusMsg = "该用户角色无权进行该操作";
+                            break;
+                        default:
+                            statusMsg = "新增产品失败，请重试!";
+                            break;
+                    }
+
+                    Log.d(AddActivity.this.getClass().getSimpleName(), statusMsg);
+
+                    Toast.makeText(AddActivity.this, statusMsg, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(AddActivity.this, "新增产品失败，请重试！", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFinish() {
+                super.onFinish();
+
+                // todo hide dialog: 正在提交数据
+
+                setResult(1002);
+                AddActivity.this.finish();
+            }
+
+            @Override
+            public void onError(Response<String> response) {
+                super.onError(response);
+
+                Toast.makeText(AddActivity.this, "新增产品失败，请重试！", Toast.LENGTH_SHORT).show();
+            }
+
+        });
+    }
+
+    private void uploadFile() {
+
+        if (imageUrl.size() > 0) {
+            imageUrl.clear();
+        }
+
         for (int i = 0; i < selectList.size(); i++) {
             LocalMedia media = selectList.get(i);
-            if (media.isCompressed()) {
-                uris.add(media.getCompressPath());
+            if (media == null) {
+                Log.d(this.getClass().getSimpleName(), "图片不存在！");
             } else {
-                uris.add(media.getPath());
+                String path = media.isCompressed() ? media.getCompressPath() : media.getPath();
+                File file = new File(path);
+                OkGo.<String>post(Constant.API_FILE_UPLOAD)
+                        .tag("uploadFile")
+                        .params("file", file)
+                        .execute(new StringCallback() {
+                            @Override
+                            public void onStart(Request<String, ? extends Request> request) {
+                                super.onStart(request);
+
+                                // todo show dialog: 正在提交数据
+                            }
+
+                            @Override
+                            public void onSuccess(Response<String> response) {
+
+                                Gson gson = new Gson();
+                                ImageUrl image = gson.fromJson(response.body(), ImageUrl.class);
+
+                                if (null != image && "true".equals(image.getStatus())) {
+                                    String url = image.getImgurl();
+                                    if (!TextUtils.isEmpty(url)) {
+                                        imageUrl.add(url);
+                                    }
+                                    Log.d(AddActivity.this.getClass().getSimpleName(), url);
+
+                                    if (selectList.size() == imageUrl.size()) {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                addProduct();
+                                            }
+                                        });
+                                    } else {
+                                        Toast.makeText(AddActivity.this, "图片上传失败，请重试！", Toast.LENGTH_SHORT).show();
+                                    }
+                                } else {
+                                    Toast.makeText(AddActivity.this, "图片上传失败，请重试！", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                            @Override
+                            public void uploadProgress(Progress progress) {
+                                super.uploadProgress(progress);
+                            }
+
+                            @Override
+                            public void onError(Response<String> response) {
+                                super.onError(response);
+
+                                Toast.makeText(AddActivity.this, "图片上传失败，请重试！", Toast.LENGTH_SHORT).show();
+                            }
+
+                        });
             }
         }
-        product.setImags(uris);
-
-        //todo fake data
-        App.product = product;
     }
 
     private GridImageAdapter.onAddPicClickListener onAddPicClickListener = new GridImageAdapter.onAddPicClickListener() {
@@ -272,5 +418,9 @@ public class AddActivity extends AppCompatActivity {
             BroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver,
                     BroadcastAction.ACTION_DELETE_PREVIEW_POSITION);
         }
+
+        OkGo.getInstance().cancelTag("addProduct");
+        OkGo.getInstance().cancelTag("uploadFile");
+
     }
 }

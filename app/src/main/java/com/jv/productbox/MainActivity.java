@@ -11,9 +11,14 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.gson.Gson;
 import com.jcodecraeer.xrecyclerview.ProgressStyle;
 import com.jcodecraeer.xrecyclerview.XRecyclerView;
-import com.jv.productbox.model.Product;
+import com.jv.productbox.model.callback.Product;
+import com.jv.productbox.model.callback.ListProduct;
+import com.lzy.okgo.OkGo;
+import com.lzy.okgo.callback.StringCallback;
+import com.lzy.okgo.model.Response;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
     private ProductListAdapter mAdapter;
     private List<Product> products = new ArrayList<>();
     private int times = 0;
+
+    ArrayList<Product> apiData = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         products.clear(); //先要清掉数据
 
-                        List<Product> list = genFakeDate();
+                        List<Product> list = getProductList("1");
                         products.addAll(list); //再将数据插入到前面
 
                         mAdapter.notifyDataSetChanged();
@@ -127,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            List<Product> list = genFakeDate();
+                            List<Product> list = getProductList("2");
                             products.addAll(list); //直接将数据追加到后面
                             Toast.makeText(MainActivity.this, "加载完成，新加" + list.size() + "件产品", Toast.LENGTH_SHORT).show();
 
@@ -139,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            List<Product> list = genFakeDate();
+                            List<Product> list = getProductList("2");
                             products.addAll(list); //将数据追加到后面
 
                             mAdapter.notifyDataSetChanged();
@@ -163,23 +170,43 @@ public class MainActivity extends AppCompatActivity {
             listProduct = null;
         }
 
-        if (App.user != null){
+        if (App.user != null) {
             App.user = null;
         }
     }
 
-    private List<Product> genFakeDate() {
-        ArrayList<Product> data = new ArrayList<>();
+//    private List<Product> getProductList(String pageNo, String productName, String userName, String beginDate, String endDate) {
+    private List<Product> getProductList(String pageNo, String... arg) {
 
-        for (int i = 0; i < 10; i++) {
-            Product product = App.product;
-//            product.setUser("李三" + i);
-//            product.setProductname("红牛红牛" + i);
-//            product.setDate("2019-11-30");
-            data.add(product);
-        }
+        OkGo.<String>get(Constant.API_GET_PRODUCT)
+                .tag(this)
+                .params("pageno", pageNo)
+                .params("productname", productName)
+                .params("userid", userName)
+                .params("begindate", beginDate)
+                .params("enddate", endDate)
+                .execute(new StringCallback() {
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        Gson gson = new Gson();
+                        ListProduct listProduct = gson.fromJson(response.body(), ListProduct.class);
 
-        return data;
+                        if (null != listProduct) {
+                            apiData.addAll(listProduct.getList());
+                        } else {
+                            Toast.makeText(MainActivity.this, "数据有误，请稍后重试！", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Response<String> response) {
+                        super.onError(response);
+
+                        Toast.makeText(MainActivity.this, "获取产品列表失败，请稍后重试！", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+        return apiData;
     }
 
     long lastTime = System.currentTimeMillis();

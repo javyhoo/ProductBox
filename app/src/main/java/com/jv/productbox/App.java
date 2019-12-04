@@ -2,7 +2,7 @@ package com.jv.productbox;
 
 import android.app.Application;
 
-import com.jv.productbox.model.Product;
+import com.jv.productbox.model.callback.Product;
 import com.jv.productbox.model.User;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.cache.CacheEntity;

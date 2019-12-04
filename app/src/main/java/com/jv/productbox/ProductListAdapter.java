@@ -10,7 +10,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.jv.productbox.model.Product;
+import com.jv.productbox.model.callback.Product;
 
 import java.util.List;
 
@@ -44,9 +44,9 @@ public class ProductListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Product product = items.get(position);
         ViewHolderOne viewHolderOne = (ViewHolderOne) holder;
-        viewHolderOne.tvName.setText(product.getProductname());
-        viewHolderOne.tvUser.setText(product.getUser());
-        viewHolderOne.tvDate.setText(product.getDate());
+        viewHolderOne.tvName.setText(product.getName());
+        viewHolderOne.tvUser.setText(product.getUserid());
+        viewHolderOne.tvDate.setText(product.getCreatedate());
 
 //                if (newsBean.getImg_list() != null && newsBean.getImg_list().size() > 0) {
 //                    Glide.with(context)
@@ -61,7 +61,7 @@ public class ProductListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             public void onClick(View v) {
                 int pos = holder.getLayoutPosition();
 
-                Toast.makeText(context, items.get(pos - 1).getProductname(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, items.get(pos - 1).getName(), Toast.LENGTH_SHORT).show();
             }
         });
     }
