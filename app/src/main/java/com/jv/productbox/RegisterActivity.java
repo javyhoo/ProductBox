@@ -10,9 +10,14 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.gson.Gson;
+import com.jv.productbox.model.callback.Register;
+import com.lzy.okgo.OkGo;
+import com.lzy.okgo.callback.StringCallback;
+import com.lzy.okgo.model.Response;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
-
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -25,6 +30,8 @@ public class RegisterActivity extends AppCompatActivity {
     @BindView(R.id.btn_save)
     Button btnSave;
 
+    String roleid = "2";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,8 +40,11 @@ public class RegisterActivity extends AppCompatActivity {
 
         getSupportActionBar().setTitle("注册账号");
 
+        if (App.user != null && !TextUtils.isEmpty(App.user.getRoleid())) {
+            roleid = App.user.getRoleid();
+        }
 
-        tvRole.setText(App.user.getRoid() == 1 ? "管理员" : "查询人员");
+        tvRole.setText("1".equals(roleid) ? "管理员" : "查询人员");
 
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -46,15 +56,41 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(RegisterActivity.this, "账号或密码为空，请检查！", Toast.LENGTH_SHORT).show();
                 } else {
                     saveToServer(account, password);
-
-                    finish();
                 }
             }
         });
     }
 
-    private void saveToServer(String account, String psw) {
-        //todo 2019-11-27 16:27:41
-        Toast.makeText(this, "存到服务端", Toast.LENGTH_SHORT).show();
+    private void saveToServer(String account, String password) {
+
+        OkGo.<String>get(Constant.API_REGISTER)
+                .tag(this)
+                .params("account", account)
+                .params("psw", password)
+                .params("roid", roleid)
+                .execute(new StringCallback() {
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        Gson gson = new Gson();
+                        Register register = gson.fromJson(response.body(), Register.class);
+
+                        if (null == register) {
+                            Toast.makeText(RegisterActivity.this, "数据异常，请联系管理员！", Toast.LENGTH_SHORT).show();
+                        } else if ("true".equals(register.getResult())) {
+                            Toast.makeText(RegisterActivity.this, "注册成功！", Toast.LENGTH_SHORT).show();
+                            RegisterActivity.this.finish();
+                        } else {
+                            Toast.makeText(RegisterActivity.this, register.getMsg(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Response<String> response) {
+                        super.onError(response);
+
+                        Toast.makeText(RegisterActivity.this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
     }
 }

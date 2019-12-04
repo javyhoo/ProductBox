@@ -1,5 +1,6 @@
 package com.jv.productbox;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -10,6 +11,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.fragment.app.FragmentActivity;
+
+import com.google.gson.Gson;
+import com.jv.productbox.model.callback.Login;
+import com.lzy.okgo.OkGo;
+import com.lzy.okgo.callback.StringCallback;
+import com.lzy.okgo.model.Response;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -36,6 +44,8 @@ public class LoginActivity extends FragmentActivity {
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
+        RxPermissions permissions = new RxPermissions(this);
+
         tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -52,26 +62,59 @@ public class LoginActivity extends FragmentActivity {
         btLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                account = etAccount.getText().toString().trim();
-                password = etPassword.getText().toString().trim();
+                permissions.request(Manifest.permission.INTERNET)
+                        .subscribe(granted -> {
+                            if (granted) {
+                                account = etAccount.getText().toString().trim();
+                                password = etPassword.getText().toString().trim();
 
-                if (TextUtils.isEmpty(account) || TextUtils.isEmpty(password)) {
-                    Toast.makeText(LoginActivity.this, "账号或密码为空，请检查！", Toast.LENGTH_SHORT).show();
-                } else {
-                    if ("a".equals(account) && "1".equals(password)) {
-                        App.user.setAccount("a");
-                        App.user.setRoid(1);
-
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        LoginActivity.this.startActivity(intent);
-
-                        LoginActivity.this.finish();
-                    } else {
-                        Toast.makeText(LoginActivity.this, "账号或密码不正确，请检查！", Toast.LENGTH_SHORT).show();
-                    }
-                }
+                                if (TextUtils.isEmpty(account) || TextUtils.isEmpty(password)) {
+                                    Toast.makeText(LoginActivity.this, "账号或密码为空，请检查！", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    login(account, password);
+                                }
+                            } else {
+                                Toast.makeText(LoginActivity.this, "请开启网络权限！", Toast.LENGTH_SHORT).show();
+                            }
+                        });
             }
         });
+    }
+
+    private void login(String account, String password) {
+        OkGo.<String>get(Constant.API_LOGIN)
+                .tag(this)
+                .params("account", account)
+                .params("psw", password)
+                .execute(new StringCallback() {
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        Gson gson = new Gson();
+                        Login login = gson.fromJson(response.body(), Login.class);
+
+                        if (null == login) {
+                            Toast.makeText(LoginActivity.this, "数据异常，请联系管理员！", Toast.LENGTH_SHORT).show();
+                        } else if ("true".equals(login.getStatus())) {
+                            App.user.setAccount(account);
+                            App.user.setRoleid(login.getRoleid());
+                            App.user.setToken(login.getToken());
+
+                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                            LoginActivity.this.startActivity(intent);
+
+                            LoginActivity.this.finish();
+                        } else {
+                            Toast.makeText(LoginActivity.this, login.getMsg(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Response<String> response) {
+                        super.onError(response);
+
+                        Toast.makeText(LoginActivity.this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
 }

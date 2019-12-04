@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.jv.productbox.model.Product;
 import com.luck.picture.lib.PictureSelector;
 import com.luck.picture.lib.broadcast.BroadcastAction;
 import com.luck.picture.lib.broadcast.BroadcastManager;
@@ -251,17 +252,15 @@ public class AddActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             Bundle extras;
-            switch (action) {
-                case BroadcastAction.ACTION_DELETE_PREVIEW_POSITION:
-                    // 外部预览删除按钮回调
-                    extras = intent.getExtras();
-                    int position = extras.getInt(PictureConfig.EXTRA_PREVIEW_DELETE_POSITION);
-                    ToastUtils.s(context, "delete image index:" + position);
-                    if (position < adapter.getItemCount()) {
-                        selectList.remove(position);
-                        adapter.notifyItemRemoved(position);
-                    }
-                    break;
+            if (BroadcastAction.ACTION_DELETE_PREVIEW_POSITION.equals(action)) {
+                // 外部预览删除按钮回调
+                extras = intent.getExtras();
+                int position = extras.getInt(PictureConfig.EXTRA_PREVIEW_DELETE_POSITION);
+                ToastUtils.s(context, "delete image index:" + position);
+                if (position < adapter.getItemCount()) {
+                    selectList.remove(position);
+                    adapter.notifyItemRemoved(position);
+                }
             }
         }
     };

@@ -1,4 +1,4 @@
-package com.jv.productbox;
+package com.jv.productbox.model;
 
 import java.util.List;
 

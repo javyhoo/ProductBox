@@ -10,6 +10,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.jv.productbox.model.Product;
+
 import java.util.List;
 
 import butterknife.BindView;

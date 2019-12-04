@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.jcodecraeer.xrecyclerview.ProgressStyle;
 import com.jcodecraeer.xrecyclerview.XRecyclerView;
+import com.jv.productbox.model.Product;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         MenuItem productAdd = menu.findItem(R.id.app_bar_product_add);
         MenuItem userAdd = menu.findItem(R.id.app_bar_admin_add);
 
-        if (App.user.getRoid() == 1) {
+        if ("1".equals(App.user.getRoleid())) {
             productAdd.setVisible(true);
             userAdd.setVisible(true);
         } else {
@@ -160,6 +161,10 @@ public class MainActivity extends AppCompatActivity {
         if (listProduct != null) {
             listProduct.destroy();
             listProduct = null;
+        }
+
+        if (App.user != null){
+            App.user = null;
         }
     }
 
