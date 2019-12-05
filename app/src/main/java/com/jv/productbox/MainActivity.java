@@ -35,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
     private List<Product> products = new ArrayList<>();
     private int times = 0;
 
-    ArrayList<Product> apiData = new ArrayList<>();
     private int searchPageNo = 1;
     private String searchProductName = null;
     private String searchUserName = null;
@@ -61,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
         MenuItem productAdd = menu.findItem(R.id.app_bar_product_add);
         MenuItem userAdd = menu.findItem(R.id.app_bar_admin_add);
 
-        if ("1".equals(App.user.getRoleid())) {
+        if (1 == App.user.getRoleid()) {
             productAdd.setVisible(true);
             userAdd.setVisible(true);
         } else {
@@ -202,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
                             if (null != listProduct) {
 //                                if (pageNo == 1){
 //                                    products.clear();
-                                    products.addAll(listProduct.getList());
+                                products.addAll(listProduct.getList());
 //                                } else {
 //
 //                                }

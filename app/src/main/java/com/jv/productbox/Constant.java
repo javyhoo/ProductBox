@@ -2,7 +2,7 @@ package com.jv.productbox;
 
 public class Constant {
 
-    private static final String BASE_URL = "http://96f0116e.ngrok.io/";
+    public static final String BASE_URL = "http://fd183abb.ngrok.io/";
 
     public static final String API_LOGIN = BASE_URL + "login";
     public static final String API_REGISTER = BASE_URL + "register";

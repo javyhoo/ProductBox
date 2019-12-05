@@ -38,7 +38,7 @@ import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.model.Progress;
 import com.lzy.okgo.model.Response;
-import com.lzy.okgo.request.GetRequest;
+import com.lzy.okgo.request.PostRequest;
 import com.lzy.okgo.request.base.Request;
 import com.skateboard.zxinglib.CaptureActivity;
 import com.tbruyelle.rxpermissions2.RxPermissions;
@@ -173,7 +173,7 @@ public class AddActivity extends AppCompatActivity {
 //    }
 
     private void addProduct() {
-        GetRequest<String> request = OkGo.<String>get(Constant.API_ADD_PRODUCT)
+        PostRequest<String> request = OkGo.<String>post(Constant.API_ADD_PRODUCT)
                 .tag("addProduct")
                 .params("token", App.user.getToken())
                 .params("productname", etName.getText().toString())

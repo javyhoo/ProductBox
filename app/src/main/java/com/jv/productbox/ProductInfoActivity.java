@@ -9,6 +9,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.gson.Gson;
 import com.jcodecraeer.xrecyclerview.XRecyclerView;
 import com.jv.productbox.model.callback.Product;
 import com.tbruyelle.rxpermissions2.RxPermissions;
@@ -20,21 +21,6 @@ public class ProductInfoActivity extends AppCompatActivity {
 
     public static final String TAG_PRODUCT = "tag_product";
     private Product product;
-
-    private String fake = "{\n" +
-            "    \"imags\":[\n" +
-            "        \"http://192.168.0.108:8080/imgupload/eae4a545-6d6e-4a16-9001-399cf8fbccbd.jpg\",\n" +
-            "        \"http://192.168.0.108:8080/imgupload/eae4a545-6d6e-4a16-9001-399cf8fbccbd.jpg\",\n" +
-            "        \"http://192.168.0.108:8080/imgupload/eae4a545-6d6e-4a16-9001-399cf8fbccbd.jpg\"\n" +
-            "    ],\n" +
-            "    \"productid\":13,\n" +
-            "    \"name\":\"我是测试\",\n" +
-            "    \"description\":\"测试好好噢噢\",\n" +
-            "    \"createdate\":\"2019-12-04 00:30:11\",\n" +
-            "    \"barcode\":\"1232123221ssd\",\n" +
-            "    \"userid\":\"chenchang\"\n" +
-            "}";
-
 
     @BindView(R.id.tv_name)
     TextView tvProductName;
@@ -85,6 +71,7 @@ public class ProductInfoActivity extends AppCompatActivity {
         listImags.setLayoutManager(layoutManager);
         ImageListAdapter mAdapter = new ImageListAdapter(this, product.getImags());
         listImags.setAdapter(mAdapter);
+        mAdapter.notifyDataSetChanged();
 
         listImags.setVisibility(View.VISIBLE);
     }

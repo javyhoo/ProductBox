@@ -9,7 +9,7 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -23,9 +23,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     public ImageListAdapter(Context context, List<String> items) {
         this.context = context;
-//        this.items = items;
-
-        this.items.add("https://pics4.baidu.com/feed/b64543a98226cffce2611ef12f269095f703eadc.jpeg?token=58bc1c7ff6e42c53a7912d22088f88a3&amp;s=3AA87C224B3F748AD6F0F4C8010060B1");
+        this.items = items;
     }
 
     @NonNull
@@ -46,7 +44,7 @@ public class ImageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         String url = items.get(position);
 
         ViewHolderOne viewHolderOne = (ViewHolderOne) holder;
-        Glide.with(context).load(url).into(viewHolderOne.image);
+        Picasso.get().load(Constant.BASE_URL + url).into(viewHolderOne.image);
     }
 
     @Override
