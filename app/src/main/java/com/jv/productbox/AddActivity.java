@@ -148,7 +148,6 @@ public class AddActivity extends AppCompatActivity {
     }
 
 //    private void saveProductToServer() {
-//        //todo
 //        Product product = new Product();
 //        product.setProductname(etName.getText().toString());
 //        product.setBarcode(tvBarcode.getText().toString());
@@ -170,7 +169,6 @@ public class AddActivity extends AppCompatActivity {
 //        }
 //        product.setImags(uris);
 //
-//        //todo fake data
 //        App.product = product;
 //    }
 
@@ -186,58 +184,63 @@ public class AddActivity extends AppCompatActivity {
             request.params("imags", imageUrl.get(i));
         }
 
-        request.execute(new StringCallback() {
-            @Override
-            public void onSuccess(Response<String> response) {
-                Gson gson = new Gson();
-                AddProduct product = gson.fromJson(response.body(), AddProduct.class);
+        try {
+            request.execute(new StringCallback() {
+                @Override
+                public void onSuccess(Response<String> response) {
+                    Gson gson = new Gson();
+                    AddProduct product = gson.fromJson(response.body(), AddProduct.class);
 
-                if (null != product) {
-                    String statusMsg;
-                    switch (product.getStatus()) {
-                        case "0":
-                            statusMsg = "新增成功";
-                            break;
-                        case "1":
-                            statusMsg = "参数缺失";
-                            break;
-                        case "2":
-                            statusMsg = "该操作需要登陆 ";
-                            break;
-                        case "3":
-                            statusMsg = "该用户角色无权进行该操作";
-                            break;
-                        default:
-                            statusMsg = "新增产品失败，请重试!";
-                            break;
+                    if (null != product) {
+                        String statusMsg;
+                        switch (product.getStatus()) {
+                            case "0":
+                                statusMsg = "新增成功";
+                                break;
+                            case "1":
+                                statusMsg = "参数缺失";
+                                break;
+                            case "2":
+                                statusMsg = "该操作需要登陆 ";
+                                break;
+                            case "3":
+                                statusMsg = "该用户角色无权进行该操作";
+                                break;
+                            default:
+                                statusMsg = "新增产品失败，请重试!";
+                                break;
+                        }
+
+                        Log.d(AddActivity.this.getClass().getSimpleName(), statusMsg);
+
+                        Toast.makeText(AddActivity.this, statusMsg, Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(AddActivity.this, "新增产品失败，请重试！", Toast.LENGTH_SHORT).show();
                     }
+                }
 
-                    Log.d(AddActivity.this.getClass().getSimpleName(), statusMsg);
+                @Override
+                public void onFinish() {
+                    super.onFinish();
 
-                    Toast.makeText(AddActivity.this, statusMsg, Toast.LENGTH_SHORT).show();
-                } else {
+                    // todo hide dialog: 正在提交数据
+
+                    setResult(1002);
+                    AddActivity.this.finish();
+                }
+
+                @Override
+                public void onError(Response<String> response) {
+                    super.onError(response);
+
                     Toast.makeText(AddActivity.this, "新增产品失败，请重试！", Toast.LENGTH_SHORT).show();
                 }
-            }
 
-            @Override
-            public void onFinish() {
-                super.onFinish();
-
-                // todo hide dialog: 正在提交数据
-
-                setResult(1002);
-                AddActivity.this.finish();
-            }
-
-            @Override
-            public void onError(Response<String> response) {
-                super.onError(response);
-
-                Toast.makeText(AddActivity.this, "新增产品失败，请重试！", Toast.LENGTH_SHORT).show();
-            }
-
-        });
+            });
+        } catch (Exception e) {
+            Toast.makeText(this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
     }
 
     private void uploadFile() {
@@ -253,58 +256,63 @@ public class AddActivity extends AppCompatActivity {
             } else {
                 String path = media.isCompressed() ? media.getCompressPath() : media.getPath();
                 File file = new File(path);
-                OkGo.<String>post(Constant.API_FILE_UPLOAD)
-                        .tag("uploadFile")
-                        .params("file", file)
-                        .execute(new StringCallback() {
-                            @Override
-                            public void onStart(Request<String, ? extends Request> request) {
-                                super.onStart(request);
+                try {
+                    OkGo.<String>post(Constant.API_FILE_UPLOAD)
+                            .tag("uploadFile")
+                            .params("file", file)
+                            .execute(new StringCallback() {
+                                @Override
+                                public void onStart(Request<String, ? extends Request> request) {
+                                    super.onStart(request);
 
-                                // todo show dialog: 正在提交数据
-                            }
+                                    // todo show dialog: 正在提交数据
+                                }
 
-                            @Override
-                            public void onSuccess(Response<String> response) {
+                                @Override
+                                public void onSuccess(Response<String> response) {
 
-                                Gson gson = new Gson();
-                                ImageUrl image = gson.fromJson(response.body(), ImageUrl.class);
+                                    Gson gson = new Gson();
+                                    ImageUrl image = gson.fromJson(response.body(), ImageUrl.class);
 
-                                if (null != image && "true".equals(image.getStatus())) {
-                                    String url = image.getImgurl();
-                                    if (!TextUtils.isEmpty(url)) {
-                                        imageUrl.add(url);
-                                    }
-                                    Log.d(AddActivity.this.getClass().getSimpleName(), url);
+                                    if (null != image && "true".equals(image.getStatus())) {
+                                        String url = image.getImgurl();
+                                        if (!TextUtils.isEmpty(url)) {
+                                            imageUrl.add(url);
+                                        }
+                                        Log.d(AddActivity.this.getClass().getSimpleName(), url);
 
-                                    if (selectList.size() == imageUrl.size()) {
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                addProduct();
-                                            }
-                                        });
+                                        if (selectList.size() == imageUrl.size()) {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    addProduct();
+                                                }
+                                            });
+                                        } else {
+                                            Toast.makeText(AddActivity.this, "图片上传失败，请重试！", Toast.LENGTH_SHORT).show();
+                                        }
                                     } else {
                                         Toast.makeText(AddActivity.this, "图片上传失败，请重试！", Toast.LENGTH_SHORT).show();
                                     }
-                                } else {
+                                }
+
+                                @Override
+                                public void uploadProgress(Progress progress) {
+                                    super.uploadProgress(progress);
+                                }
+
+                                @Override
+                                public void onError(Response<String> response) {
+                                    super.onError(response);
+
                                     Toast.makeText(AddActivity.this, "图片上传失败，请重试！", Toast.LENGTH_SHORT).show();
                                 }
-                            }
 
-                            @Override
-                            public void uploadProgress(Progress progress) {
-                                super.uploadProgress(progress);
-                            }
-
-                            @Override
-                            public void onError(Response<String> response) {
-                                super.onError(response);
-
-                                Toast.makeText(AddActivity.this, "图片上传失败，请重试！", Toast.LENGTH_SHORT).show();
-                            }
-
-                        });
+                            });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }

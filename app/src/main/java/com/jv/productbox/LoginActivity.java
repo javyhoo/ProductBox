@@ -83,43 +83,53 @@ public class LoginActivity extends FragmentActivity {
     }
 
     private void login(String account, String password) {
-        OkGo.<String>get(Constant.API_LOGIN)
-                .tag(this)
-                .params("account", account)
-                .params("psw", password)
-                .execute(new StringCallback() {
-                    @Override
-                    public void onSuccess(Response<String> response) {
-                        Gson gson = new Gson();
-                        Login login = gson.fromJson(response.body(), Login.class);
-
-                        if (null == login) {
-                            Toast.makeText(LoginActivity.this, "数据异常，请联系管理员！", Toast.LENGTH_SHORT).show();
-                        } else if ("true".equals(login.getStatus())) {
-                            if (App.user == null){
-                                App.user = new User();
+        try {
+            OkGo.<String>get(Constant.API_LOGIN)
+                    .tag(this)
+                    .params("account", account)
+                    .params("psw", password)
+                    .execute(new StringCallback() {
+                        @Override
+                        public void onSuccess(Response<String> response) {
+                            Gson gson = new Gson();
+                            Login login = null;
+                            try {
+                                login = gson.fromJson(response.body(), Login.class);
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
 
-                            App.user.setAccount(account);
-                            App.user.setRoleid(login.getRoleid());
-                            App.user.setToken(login.getToken());
+                            if (null == login) {
+                                Toast.makeText(LoginActivity.this, "数据异常，请联系管理员！", Toast.LENGTH_SHORT).show();
+                            } else if ("true".equals(login.getStatus())) {
+                                if (App.user == null) {
+                                    App.user = new User();
+                                }
 
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            LoginActivity.this.startActivity(intent);
+                                App.user.setAccount(account);
+                                App.user.setRoleid(login.getRoleid());
+                                App.user.setToken(login.getToken());
 
-                            LoginActivity.this.finish();
-                        } else {
-                            Toast.makeText(LoginActivity.this, login.getMsg(), Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                LoginActivity.this.startActivity(intent);
+
+                                LoginActivity.this.finish();
+                            } else {
+                                Toast.makeText(LoginActivity.this, login.getMsg(), Toast.LENGTH_SHORT).show();
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onError(Response<String> response) {
-                        super.onError(response);
+                        @Override
+                        public void onError(Response<String> response) {
+                            super.onError(response);
 
-                        Toast.makeText(LoginActivity.this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                            Toast.makeText(LoginActivity.this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        } catch (Exception e) {
+            Toast.makeText(this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
     }
 
     @Override

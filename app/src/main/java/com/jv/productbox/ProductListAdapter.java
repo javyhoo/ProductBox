@@ -49,9 +49,9 @@ public class ProductListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         viewHolderOne.tvName.setText(product.getName());
         viewHolderOne.tvUser.setText(product.getUserid());
 
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        String createDate = formatter.format(new Date(product.getCreatedate()));
-        viewHolderOne.tvDate.setText(createDate);
+//        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+//        String createDate = formatter.format(new Date(product.getCreatedate()));
+        viewHolderOne.tvDate.setText(product.getCreatedate());
 
 //                if (newsBean.getImg_list() != null && newsBean.getImg_list().size() > 0) {
 //                    Glide.with(context)
@@ -69,6 +69,7 @@ public class ProductListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 Product product1 = items.get(pos - 1);
 
                 Intent intent = new Intent(context, ProductInfoActivity.class);
+                intent.putExtra(ProductInfoActivity.TAG_PRODUCT, product1);
                 context.startActivity(intent);
             }
         });

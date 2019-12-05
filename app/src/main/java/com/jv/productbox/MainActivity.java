@@ -124,13 +124,13 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         products.clear(); //先要清掉数据
 
-                        List<Product> list = getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
-                        products.addAll(list); //再将数据插入到前面
+                        getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
+//                        products.addAll(list); //再将数据插入到前面
 
                         mAdapter.notifyDataSetChanged();
 
                         listProduct.refreshComplete(); //下拉刷新完成
-                        Toast.makeText(MainActivity.this, "刷新完成，新加" + list.size() + "件产品", Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(MainActivity.this, "刷新完成，新加" + products.size() + "件产品", Toast.LENGTH_SHORT).show();
                     }
                 }, 1000);
             }
@@ -141,9 +141,9 @@ public class MainActivity extends AppCompatActivity {
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            List<Product> list = getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
-                            products.addAll(list); //直接将数据追加到后面
-                            Toast.makeText(MainActivity.this, "加载完成，新加" + list.size() + "件产品", Toast.LENGTH_SHORT).show();
+                            getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
+//                            products.addAll(list); //直接将数据追加到后面
+//                            Toast.makeText(MainActivity.this, "加载完成，新加" + list.size() + "件产品", Toast.LENGTH_SHORT).show();
 
                             listProduct.loadMoreComplete();
                             mAdapter.notifyDataSetChanged();
@@ -153,8 +153,8 @@ public class MainActivity extends AppCompatActivity {
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            List<Product> list = getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
-                            products.addAll(list); //将数据追加到后面
+                            getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
+//                            products.addAll(list); //将数据追加到后面
 
                             mAdapter.notifyDataSetChanged();
                             listProduct.setNoMore(true);
@@ -180,38 +180,49 @@ public class MainActivity extends AppCompatActivity {
         if (App.user != null) {
             App.user = null;
         }
+
+        OkGo.getInstance().cancelTag(this);
     }
 
-    private List<Product> getProductList(int pageNo, String productName, String userName, String beginDate, String endDate) {
-        OkGo.<String>get(Constant.API_GET_PRODUCT)
-                .tag(this)
-                .params("pageno", pageNo)
-                .params("productname", productName)
-                .params("userid", userName)
-                .params("begindate", beginDate)
-                .params("enddate", endDate)
-                .execute(new StringCallback() {
-                    @Override
-                    public void onSuccess(Response<String> response) {
-                        Gson gson = new Gson();
-                        ListProduct listProduct = gson.fromJson(response.body(), ListProduct.class);
+    private void getProductList(int pageNo, String productName, String userName, String beginDate, String endDate) {
+        try {
+            OkGo.<String>get(Constant.API_GET_PRODUCT)
+                    .tag(this)
+                    .params("pageno", pageNo)
+                    .params("productname", productName)
+                    .params("userid", userName)
+                    .params("begindate", beginDate)
+                    .params("enddate", endDate)
+                    .execute(new StringCallback() {
+                        @Override
+                        public void onSuccess(Response<String> response) {
+                            Gson gson = new Gson();
+                            ListProduct listProduct = gson.fromJson(response.body(), ListProduct.class);
 
-                        if (null != listProduct) {
-                            apiData.addAll(listProduct.getList());
-                        } else {
-                            Toast.makeText(MainActivity.this, "数据有误，请稍后重试！", Toast.LENGTH_SHORT).show();
+                            if (null != listProduct) {
+//                                if (pageNo == 1){
+//                                    products.clear();
+                                    products.addAll(listProduct.getList());
+//                                } else {
+//
+//                                }
+                            } else {
+                                Toast.makeText(MainActivity.this, "数据有误，请稍后重试！", Toast.LENGTH_SHORT).show();
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onError(Response<String> response) {
-                        super.onError(response);
+                        @Override
+                        public void onError(Response<String> response) {
+                            super.onError(response);
 
-                        Toast.makeText(MainActivity.this, "获取产品列表失败，请稍后重试！", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                            Toast.makeText(MainActivity.this, "获取产品列表失败，请稍后重试！", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        } catch (Exception e) {
+            Toast.makeText(this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
 
-        return apiData;
     }
 
     long lastTime = System.currentTimeMillis();

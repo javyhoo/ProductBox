@@ -31,6 +31,9 @@ import butterknife.ButterKnife;
 
 public class SearchActivity extends AppCompatActivity {
 
+    private String fakeProdut = "{\"namelist\":[\"我是测试\",\"我是测试10\",\"我是测试11\",\"我是测试12\",\"我是测试2\",\"我是测试3\",\"我是测试4\",\"我是测试5\",\"我是测试6\",\"我是测试7\",\"我是测试8\",\"我是测试9\"]}";
+    private String fakeUser = "{\"namelist\":[\"18613157068\",\"chenchang\"]}";
+
     @BindView(R.id.spinner_product)
     Spinner sProduct;
     @BindView(R.id.spinner_user)
@@ -126,51 +129,61 @@ public class SearchActivity extends AppCompatActivity {
         permissions.request(Manifest.permission.INTERNET)
                 .subscribe(granted -> {
                     if (granted) {
-                        OkGo.<String>get(Constant.API_GET_PRODUCT_NAME)
-                                .tag("productName")
-                                .execute(new StringCallback() {
-                                    @Override
-                                    public void onSuccess(Response<String> response) {
-                                        Gson gson = new Gson();
-                                        ListName names = gson.fromJson(response.body(), ListName.class);
+                        try {
+                            OkGo.<String>get(Constant.API_GET_PRODUCT_NAME)
+                                    .tag("productName")
+                                    .execute(new StringCallback() {
+                                        @Override
+                                        public void onSuccess(Response<String> response) {
+                                            Gson gson = new Gson();
+                                            ListName names = gson.fromJson(response.body(), ListName.class);
 
-                                        if (null != names) {
-                                            productList.addAll(names.getNamelist());
-                                        } else {
-                                            Toast.makeText(SearchActivity.this, "数据异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                                            if (null != names) {
+                                                productList.addAll(names.getNamelist());
+                                            } else {
+                                                Toast.makeText(SearchActivity.this, "数据异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                                            }
                                         }
-                                    }
 
-                                    @Override
-                                    public void onError(Response<String> response) {
-                                        super.onError(response);
+                                        @Override
+                                        public void onError(Response<String> response) {
+                                            super.onError(response);
 
-                                        Toast.makeText(SearchActivity.this, "数据加载失败，请稍后重试！", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-
-                        OkGo.<String>get(Constant.API_GET_PRODUCT_USER)
-                                .tag("productUser")
-                                .execute(new StringCallback() {
-                                    @Override
-                                    public void onSuccess(Response<String> response) {
-                                        Gson gson = new Gson();
-                                        ListName names = gson.fromJson(response.body(), ListName.class);
-
-                                        if (null != names) {
-                                            userList.addAll(names.getNamelist());
-                                        } else {
-                                            Toast.makeText(SearchActivity.this, "数据异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(SearchActivity.this, "数据加载失败，请稍后重试！", Toast.LENGTH_SHORT).show();
                                         }
-                                    }
+                                    });
+                        } catch (Exception e) {
+                            Toast.makeText(SearchActivity.this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                        }
 
-                                    @Override
-                                    public void onError(Response<String> response) {
-                                        super.onError(response);
+                        try {
+                            OkGo.<String>get(Constant.API_GET_PRODUCT_USER)
+                                    .tag("productUser")
+                                    .execute(new StringCallback() {
+                                        @Override
+                                        public void onSuccess(Response<String> response) {
+                                            Gson gson = new Gson();
+                                            ListName names = gson.fromJson(response.body(), ListName.class);
 
-                                        Toast.makeText(SearchActivity.this, "数据加载失败，请稍后重试！", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
+                                            if (null != names) {
+                                                userList.addAll(names.getNamelist());
+                                            } else {
+                                                Toast.makeText(SearchActivity.this, "数据异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onError(Response<String> response) {
+                                            super.onError(response);
+
+                                            Toast.makeText(SearchActivity.this, "数据加载失败，请稍后重试！", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        } catch (Exception e) {
+                            Toast.makeText(SearchActivity.this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                        }
 
                     } else {
                         Toast.makeText(SearchActivity.this, "请开启网络权限！", Toast.LENGTH_SHORT).show();

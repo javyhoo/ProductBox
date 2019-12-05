@@ -62,35 +62,39 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void saveToServer(String account, String password) {
+        try {
+            OkGo.<String>get(Constant.API_REGISTER)
+                    .tag(this)
+                    .params("account", account)
+                    .params("psw", password)
+                    .params("roid", roleid)
+                    .execute(new StringCallback() {
+                        @Override
+                        public void onSuccess(Response<String> response) {
+                            Gson gson = new Gson();
+                            Register register = gson.fromJson(response.body(), Register.class);
 
-        OkGo.<String>get(Constant.API_REGISTER)
-                .tag(this)
-                .params("account", account)
-                .params("psw", password)
-                .params("roid", roleid)
-                .execute(new StringCallback() {
-                    @Override
-                    public void onSuccess(Response<String> response) {
-                        Gson gson = new Gson();
-                        Register register = gson.fromJson(response.body(), Register.class);
-
-                        if (null == register) {
-                            Toast.makeText(RegisterActivity.this, "数据异常，请联系管理员！", Toast.LENGTH_SHORT).show();
-                        } else if ("true".equals(register.getResult())) {
-                            Toast.makeText(RegisterActivity.this, "注册成功！", Toast.LENGTH_SHORT).show();
-                            RegisterActivity.this.finish();
-                        } else {
-                            Toast.makeText(RegisterActivity.this, register.getMsg(), Toast.LENGTH_SHORT).show();
+                            if (null == register) {
+                                Toast.makeText(RegisterActivity.this, "数据异常，请联系管理员！", Toast.LENGTH_SHORT).show();
+                            } else if ("true".equals(register.getResult())) {
+                                Toast.makeText(RegisterActivity.this, "注册成功！", Toast.LENGTH_SHORT).show();
+                                RegisterActivity.this.finish();
+                            } else {
+                                Toast.makeText(RegisterActivity.this, register.getMsg(), Toast.LENGTH_SHORT).show();
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onError(Response<String> response) {
-                        super.onError(response);
+                        @Override
+                        public void onError(Response<String> response) {
+                            super.onError(response);
 
-                        Toast.makeText(RegisterActivity.this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                            Toast.makeText(RegisterActivity.this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        } catch (Exception e) {
+            Toast.makeText(this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
 
     }
 
