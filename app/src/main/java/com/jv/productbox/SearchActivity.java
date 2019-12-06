@@ -29,7 +29,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     private String fakeProdut = "{\"namelist\":[\"我是测试\",\"我是测试10\",\"我是测试11\",\"我是测试12\",\"我是测试2\",\"我是测试3\",\"我是测试4\",\"我是测试5\",\"我是测试6\",\"我是测试7\",\"我是测试8\",\"我是测试9\"]}";
     private String fakeUser = "{\"namelist\":[\"18613157068\",\"chenchang\"]}";
@@ -65,29 +65,9 @@ public class SearchActivity extends AppCompatActivity {
         loadData();
         initSpinner();
 
-        sProduct.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectProduct = productList.get(position);
-            }
+        sProduct.setOnItemSelectedListener(this);
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-
-        sUser.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectUser = userList.get(position);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
+        sUser.setOnItemSelectedListener(this);
 
         tvBeginDate.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -194,9 +174,11 @@ public class SearchActivity extends AppCompatActivity {
 
     private void initSpinner() {
         ArrayAdapter<String> productAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, productList);
+        productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sProduct.setAdapter(productAdapter);
 
         ArrayAdapter<String> userAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, userList);
+        userAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sUser.setAdapter(userAdapter);
     }
 
@@ -238,5 +220,25 @@ public class SearchActivity extends AppCompatActivity {
 
         OkGo.getInstance().cancelTag("productName");
         OkGo.getInstance().cancelTag("productUser");
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        String selected = parent.getItemAtPosition(position).toString();
+
+        switch (parent.getId()) {
+            case R.id.spinner_product:
+                break;
+            case R.id.spinner_user:
+                break;
+            default:
+                break;
+        }
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
     }
 }

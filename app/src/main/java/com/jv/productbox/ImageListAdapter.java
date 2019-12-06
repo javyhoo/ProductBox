@@ -44,7 +44,10 @@ public class ImageListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         String url = items.get(position);
 
         ViewHolderOne viewHolderOne = (ViewHolderOne) holder;
-        Picasso.get().load(Constant.BASE_URL + url).into(viewHolderOne.image);
+        Picasso.get().load(Constant.BASE_URL + url)
+//                .noPlaceholder()
+//                .fit()
+                .into(viewHolderOne.image);
     }
 
     @Override

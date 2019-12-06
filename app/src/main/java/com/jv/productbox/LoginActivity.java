@@ -2,6 +2,7 @@ package com.jv.productbox;
 
 import android.Manifest;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -18,10 +19,12 @@ import com.jv.productbox.model.callback.Login;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.model.Response;
+import com.lzy.okgo.request.base.Request;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 public class LoginActivity extends FragmentActivity {
 
@@ -37,6 +40,7 @@ public class LoginActivity extends FragmentActivity {
     Button btLogin;
 
     String account, password;
+    SweetAlertDialog pDialog;
 
 
     @Override
@@ -80,6 +84,11 @@ public class LoginActivity extends FragmentActivity {
                         });
             }
         });
+
+        pDialog = new SweetAlertDialog(this, SweetAlertDialog.PROGRESS_TYPE);
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#A5DC86"));
+        pDialog.setTitleText("登录中...");
+        pDialog.setCancelable(true);
     }
 
     private void login(String account, String password) {
@@ -90,6 +99,18 @@ public class LoginActivity extends FragmentActivity {
                     .params("psw", password)
                     .execute(new StringCallback() {
                         @Override
+                        public void onStart(Request<String, ? extends Request> request) {
+                            super.onStart(request);
+                            pDialog.show();
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            super.onFinish();
+                            pDialog.cancel();
+                        }
+
+                        @Override
                         public void onSuccess(Response<String> response) {
                             Gson gson = new Gson();
                             Login login = null;
@@ -97,6 +118,7 @@ public class LoginActivity extends FragmentActivity {
                                 login = gson.fromJson(response.body(), Login.class);
                             } catch (Exception e) {
                                 e.printStackTrace();
+                                Toast.makeText(LoginActivity.this, "数据异常，请稍后重试！", Toast.LENGTH_SHORT).show();
                             }
 
                             if (null == login) {
