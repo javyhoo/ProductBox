@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -21,6 +22,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.jv.productbox.model.callback.AddProduct;
 import com.jv.productbox.model.callback.ImageUrl;
 import com.luck.picture.lib.PictureSelector;
@@ -49,6 +51,7 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import cn.pedant.SweetAlert.SweetAlertDialog;
 
 public class AddActivity extends AppCompatActivity {
 
@@ -70,6 +73,7 @@ public class AddActivity extends AppCompatActivity {
     private int maxSelectNum = 5;
     private RxPermissions rxPermissions;
     private List<String> imageUrl = new ArrayList<>();
+    private SweetAlertDialog pDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,8 +130,11 @@ public class AddActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (TextUtils.isEmpty(etName.getText().toString())) {
                     Toast.makeText(AddActivity.this, "请输入产品名称！", Toast.LENGTH_SHORT).show();
+                } else if (TextUtils.isEmpty(tvBarcode.getText())) {
+                    Toast.makeText(AddActivity.this, "请扫描条形码！", Toast.LENGTH_SHORT).show();
+                } else if (selectList.size() <= 0) {
+                    Toast.makeText(AddActivity.this, "请添加图片！", Toast.LENGTH_SHORT).show();
                 } else {
-//                    saveProductToServer();
                     uploadFile();
                 }
             }
@@ -145,51 +152,40 @@ public class AddActivity extends AppCompatActivity {
         BroadcastManager.getInstance(this).registerReceiver(broadcastReceiver,
                 BroadcastAction.ACTION_DELETE_PREVIEW_POSITION);
 
-    }
+        pDialog = new SweetAlertDialog(this, SweetAlertDialog.PROGRESS_TYPE);
+        pDialog.getProgressHelper().setBarColor(Color.parseColor("#A5DC86"));
+        pDialog.setTitleText("产品新增中...");
+        pDialog.setCancelable(true);
 
-//    private void saveProductToServer() {
-//        Product product = new Product();
-//        product.setProductname(etName.getText().toString());
-//        product.setBarcode(tvBarcode.getText().toString());
-//        product.setDescription(etDes.getText().toString());
-//
-//        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//        product.setDate(df.format(new Date()));
-//
-//        product.setUser(App.user.getAccount());
-//
-//        List<String> uris = new ArrayList<>();
-//        for (int i = 0; i < selectList.size(); i++) {
-//            LocalMedia media = selectList.get(i);
-//            if (media.isCompressed()) {
-//                uris.add(media.getCompressPath());
-//            } else {
-//                uris.add(media.getPath());
-//            }
-//        }
-//        product.setImags(uris);
-//
-//        App.product = product;
-//    }
+    }
 
     private void addProduct() {
         PostRequest<String> request = OkGo.<String>post(Constant.API_ADD_PRODUCT)
                 .tag("addProduct")
                 .params("token", App.user.getToken())
                 .params("productname", etName.getText().toString())
-                .params("description", etDes.getText().toString())
                 .params("barcode", tvBarcode.getText().toString());
 
-        for (int i = 0; i < imageUrl.size(); i++) {
-            request.params("imags", imageUrl.get(i));
+        if (!TextUtils.isEmpty(etDes.getText().toString())) {
+            request.params("description", etDes.getText().toString());
+        }
+
+        if (imageUrl.size() > 0) {
+            String array = new Gson().toJson(imageUrl);
+            request.params("imags", array);
         }
 
         try {
             request.execute(new StringCallback() {
                 @Override
                 public void onSuccess(Response<String> response) {
-                    Gson gson = new Gson();
-                    AddProduct product = gson.fromJson(response.body(), AddProduct.class);
+                    AddProduct product = null;
+                    try {
+                        Gson gson = new Gson();
+                        product = gson.fromJson(response.body(), AddProduct.class);
+                    } catch (JsonSyntaxException e) {
+                        e.printStackTrace();
+                    }
 
                     if (null != product) {
                         String statusMsg;
@@ -223,7 +219,7 @@ public class AddActivity extends AppCompatActivity {
                 public void onFinish() {
                     super.onFinish();
 
-                    // todo hide dialog: 正在提交数据
+                    pDialog.cancel();
 
                     setResult(1002);
                     AddActivity.this.finish();
@@ -264,15 +260,19 @@ public class AddActivity extends AppCompatActivity {
                                 @Override
                                 public void onStart(Request<String, ? extends Request> request) {
                                     super.onStart(request);
-
-                                    // todo show dialog: 正在提交数据
+                                    pDialog.show();
                                 }
 
                                 @Override
                                 public void onSuccess(Response<String> response) {
 
-                                    Gson gson = new Gson();
-                                    ImageUrl image = gson.fromJson(response.body(), ImageUrl.class);
+                                    ImageUrl image = null;
+                                    try {
+                                        Gson gson = new Gson();
+                                        image = gson.fromJson(response.body(), ImageUrl.class);
+                                    } catch (JsonSyntaxException e) {
+                                        e.printStackTrace();
+                                    }
 
                                     if (null != image && "true".equals(image.getStatus())) {
                                         String url = image.getImgurl();
@@ -289,7 +289,7 @@ public class AddActivity extends AppCompatActivity {
                                                 }
                                             });
                                         } else {
-                                            Toast.makeText(AddActivity.this, "图片上传失败，请重试！", Toast.LENGTH_SHORT).show();
+                                            Log.d("uploadFile", "图片未上传完！");
                                         }
                                     } else {
                                         Toast.makeText(AddActivity.this, "图片上传失败，请重试！", Toast.LENGTH_SHORT).show();
@@ -304,6 +304,7 @@ public class AddActivity extends AppCompatActivity {
                                 @Override
                                 public void onError(Response<String> response) {
                                     super.onError(response);
+                                    pDialog.cancel();
 
                                     Toast.makeText(AddActivity.this, "图片上传失败，请重试！", Toast.LENGTH_SHORT).show();
                                 }
@@ -360,9 +361,10 @@ public class AddActivity extends AppCompatActivity {
 //                                        .openClickSound(false)// 是否开启点击声音 true or false
                                     .selectionMedia(selectList)// 是否传入已选图片 List<LocalMedia> list
                                     .previewEggs(true)// 预览图片时 是否增强左右滑动图片体验(图片滑动一半即可看到上一张是否选中) true or false
-                                    .cutOutQuality(90)// 裁剪输出质量 默认100
-                                    .minimumCompressSize(100)// 小于100kb的图片不压缩
-                                    .synOrAsy(true)//同步true或异步false 压缩 默认同步
+                                    .cutOutQuality(75)// 裁剪输出质量 默认100
+                                    .minimumCompressSize(20)// 小于100kb的图片不压缩
+                                    .compressQuality(75)
+                                    .synOrAsy(false)//同步true或异步false 压缩 默认同步
 //                                        .cropWH()// 裁剪宽高比，设置如果大于图片本身宽高则无效 int
 //                                        .rotateEnabled() // 裁剪是否可旋转图片 true or false
 //                                        .scaleEnabled()// 裁剪是否可放大缩小图片 true or false

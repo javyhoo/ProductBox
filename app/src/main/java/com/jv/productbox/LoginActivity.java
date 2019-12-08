@@ -118,7 +118,6 @@ public class LoginActivity extends FragmentActivity {
                                 login = gson.fromJson(response.body(), Login.class);
                             } catch (Exception e) {
                                 e.printStackTrace();
-                                Toast.makeText(LoginActivity.this, "数据异常，请稍后重试！", Toast.LENGTH_SHORT).show();
                             }
 
                             if (null == login) {

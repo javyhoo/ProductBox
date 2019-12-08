@@ -16,6 +16,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.jv.productbox.model.callback.ListName;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.StringCallback;
@@ -30,9 +31,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class SearchActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
-
-    private String fakeProdut = "{\"namelist\":[\"我是测试\",\"我是测试10\",\"我是测试11\",\"我是测试12\",\"我是测试2\",\"我是测试3\",\"我是测试4\",\"我是测试5\",\"我是测试6\",\"我是测试7\",\"我是测试8\",\"我是测试9\"]}";
-    private String fakeUser = "{\"namelist\":[\"18613157068\",\"chenchang\"]}";
 
     @BindView(R.id.spinner_product)
     Spinner sProduct;
@@ -52,6 +50,7 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
     private List<String> userList = new ArrayList<>();
     private int mYear, mMonth, mDay;
     private String selectProduct, selectUser;
+    private String sMonth, sDay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,23 +62,21 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
         permissions = new RxPermissions(this);
 
         loadData();
-        initSpinner();
 
         sProduct.setOnItemSelectedListener(this);
-
         sUser.setOnItemSelectedListener(this);
 
         tvBeginDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                datePicker(tvBeginDate);
+                datePicker(tvBeginDate, 2019, 11, 2);
             }
         });
 
         tvEndDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                datePicker(tvEndDate);
+                datePicker(tvEndDate, mYear, mMonth, mDay);
             }
         });
 
@@ -90,16 +87,29 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
                 String beginDate = tvBeginDate.getText().toString();
                 String endDate = tvEndDate.getText().toString();
 
-                String result = "productname:" + selectProduct + ";userid:" + selectUser
-                        + ";begindate:" + beginDate + ";enddate:" + endDate;
+                selectProduct = "请选择产品名".equals(selectProduct) ? "" : selectProduct;
+                selectUser = "请选择操作人".equals(selectUser) ? "" : selectUser;
+
+                String result = "productname," + selectProduct + ";userid," + selectUser
+                        + ";begindate," + beginDate + ";enddate," + endDate;
 
                 Intent intent = new Intent();
                 intent.putExtra(TAG_SEARCH_RESULT, result);
-                setResult(RESULT_OK, intent);
+                setResult(1003, intent);
 
                 SearchActivity.this.finish();
             }
         });
+
+        Calendar ca = Calendar.getInstance();
+        mYear = ca.get(Calendar.YEAR);
+        mMonth = ca.get(Calendar.MONTH);
+        mDay = ca.get(Calendar.DAY_OF_MONTH);
+
+        sMonth = (mMonth + 1) < 10 ? "0" + (mMonth + 1) : "" + (mMonth + 1);
+        sDay = mDay < 10 ? "0" + mDay : "" + mDay;
+
+        tvEndDate.setText(mYear + "-" + sMonth + "-" + sDay);
     }
 
     private void loadData() {
@@ -115,11 +125,21 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
                                     .execute(new StringCallback() {
                                         @Override
                                         public void onSuccess(Response<String> response) {
-                                            Gson gson = new Gson();
-                                            ListName names = gson.fromJson(response.body(), ListName.class);
+                                            ListName names = null;
+                                            try {
+                                                Gson gson = new Gson();
+                                                names = gson.fromJson(response.body(), ListName.class);
+                                            } catch (JsonSyntaxException e) {
+                                                e.printStackTrace();
+                                            }
 
                                             if (null != names) {
+                                                productList.add("请选择产品名");
                                                 productList.addAll(names.getNamelist());
+
+                                                ArrayAdapter<String> productAdapter = new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_spinner_dropdown_item, productList);
+                                                productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                                                sProduct.setAdapter(productAdapter);
                                             } else {
                                                 Toast.makeText(SearchActivity.this, "数据异常，请稍后重试！", Toast.LENGTH_SHORT).show();
                                             }
@@ -143,11 +163,21 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
                                     .execute(new StringCallback() {
                                         @Override
                                         public void onSuccess(Response<String> response) {
-                                            Gson gson = new Gson();
-                                            ListName names = gson.fromJson(response.body(), ListName.class);
+                                            ListName names = null;
+                                            try {
+                                                Gson gson = new Gson();
+                                                names = gson.fromJson(response.body(), ListName.class);
+                                            } catch (JsonSyntaxException e) {
+                                                e.printStackTrace();
+                                            }
 
                                             if (null != names) {
+                                                userList.add("请选择操作人");
                                                 userList.addAll(names.getNamelist());
+
+                                                ArrayAdapter<String> userAdapter = new ArrayAdapter<>(SearchActivity.this, android.R.layout.simple_spinner_dropdown_item, userList);
+                                                userAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                                                sUser.setAdapter(userAdapter);
                                             } else {
                                                 Toast.makeText(SearchActivity.this, "数据异常，请稍后重试！", Toast.LENGTH_SHORT).show();
                                             }
@@ -172,22 +202,7 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
 
     }
 
-    private void initSpinner() {
-        ArrayAdapter<String> productAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, productList);
-        productAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sProduct.setAdapter(productAdapter);
-
-        ArrayAdapter<String> userAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, userList);
-        userAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sUser.setAdapter(userAdapter);
-    }
-
-    private void datePicker(TextView textView) {
-        Calendar ca = Calendar.getInstance();
-        mYear = ca.get(Calendar.YEAR);
-        mMonth = ca.get(Calendar.MONTH);
-        mDay = ca.get(Calendar.DAY_OF_MONTH);
-
+    private void datePicker(TextView textView, int year, int month, int day) {
         new DatePickerDialog(SearchActivity.this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
@@ -211,7 +226,7 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
                 }
                 textView.setText(days);
             }
-        }, mYear, mMonth, mDay).show();
+        }, year, month, day).show();
     }
 
     @Override
@@ -228,8 +243,10 @@ public class SearchActivity extends AppCompatActivity implements AdapterView.OnI
 
         switch (parent.getId()) {
             case R.id.spinner_product:
+                selectProduct = selected;
                 break;
             case R.id.spinner_user:
+                selectUser = selected;
                 break;
             default:
                 break;

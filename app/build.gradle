@@ -35,6 +35,11 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
 }
 
 dependencies {
@@ -67,4 +72,5 @@ dependencies {
 
     api project(':zxinglib')
     api project(':sweetalertdialog')
+    implementation 'com.android.support:recyclerview-v7:28.0.0'
 }

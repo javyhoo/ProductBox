@@ -3,8 +3,12 @@ package com.jv.productbox;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -12,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.jcodecraeer.xrecyclerview.ProgressStyle;
 import com.jcodecraeer.xrecyclerview.XRecyclerView;
 import com.jv.productbox.model.callback.ListProduct;
@@ -19,6 +24,7 @@ import com.jv.productbox.model.callback.Product;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.model.Response;
+import com.lzy.okgo.request.GetRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,12 +36,16 @@ public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.recycler_product)
     XRecyclerView listProduct;
+    @BindView(R.id.ll_search_result)
+    LinearLayout llSearResult;
+    @BindView(R.id.tv_search_result)
+    TextView tvSearchResult;
 
     private ProductListAdapter mAdapter;
     private List<Product> products = new ArrayList<>();
-    private int times = 0;
 
     private int searchPageNo = 1;
+    private int searchTotal;
     private String searchProductName = null;
     private String searchUserName = null;
     private String searchBeginDate = null;
@@ -50,6 +60,21 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setTitle("产品列表");
 
         initListView();
+
+        llSearResult.setVisibility(View.GONE);
+        llSearResult.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //清除搜索结果
+                searchProductName = "";
+                searchUserName = "";
+                searchBeginDate = "";
+                searchEndDate = "";
+
+                llSearResult.setVisibility(View.GONE);
+                listProduct.refresh();
+            }
+        });
     }
 
     @Override
@@ -117,50 +142,32 @@ public class MainActivity extends AppCompatActivity {
             public void onRefresh() {
                 searchPageNo = 1;//刷新将页码标为1
 
-                times = 0;
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         products.clear(); //先要清掉数据
 
                         getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
-//                        products.addAll(list); //再将数据插入到前面
-
                         mAdapter.notifyDataSetChanged();
-
                         listProduct.refreshComplete(); //下拉刷新完成
-//                        Toast.makeText(MainActivity.this, "刷新完成，新加" + products.size() + "件产品", Toast.LENGTH_SHORT).show();
                     }
                 }, 1000);
             }
 
             @Override
             public void onLoadMore() {
-                if (times < 20) {//加载20次后，就不再加载更多
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (products.size() < searchTotal) {
+                            searchPageNo++;
                             getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
-//                            products.addAll(list); //直接将数据追加到后面
-//                            Toast.makeText(MainActivity.this, "加载完成，新加" + list.size() + "件产品", Toast.LENGTH_SHORT).show();
-
-                            listProduct.loadMoreComplete();
-                            mAdapter.notifyDataSetChanged();
-                        }
-                    }, 1000);
-                } else {
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            getProductList(searchPageNo, searchProductName, searchUserName, searchBeginDate, searchEndDate);
-//                            products.addAll(list); //将数据追加到后面
 
                             mAdapter.notifyDataSetChanged();
                             listProduct.setNoMore(true);
                         }
-                    }, 1000);
-                }
-                times++;
+                    }
+                }, 1000);
             }
         });
 
@@ -185,38 +192,53 @@ public class MainActivity extends AppCompatActivity {
 
     private void getProductList(int pageNo, String productName, String userName, String beginDate, String endDate) {
         try {
-            OkGo.<String>get(Constant.API_GET_PRODUCT)
+            GetRequest request = OkGo.<String>get(Constant.API_GET_PRODUCT)
                     .tag(this)
-                    .params("pageno", pageNo)
-                    .params("productname", productName)
-                    .params("userid", userName)
-                    .params("begindate", beginDate)
-                    .params("enddate", endDate)
-                    .execute(new StringCallback() {
-                        @Override
-                        public void onSuccess(Response<String> response) {
-                            Gson gson = new Gson();
-                            ListProduct listProduct = gson.fromJson(response.body(), ListProduct.class);
+                    .params("pageno", pageNo);
+            if (!TextUtils.isEmpty(productName)) {
+                request.params("productname", productName);
+            }
+            if (!TextUtils.isEmpty(userName)) {
+                request.params("userid", userName);
+            }
+            if (!TextUtils.isEmpty(beginDate)) {
+                request.params("begindate", beginDate);
+            }
+            if (!TextUtils.isEmpty(endDate)) {
+                request.params("enddate", endDate);
+            }
+            request.execute(new StringCallback() {
+                @Override
+                public void onSuccess(Response<String> response) {
+                    ListProduct listProduct = null;
+                    try {
+                        Gson gson = new Gson();
+                        listProduct = gson.fromJson(response.body(), ListProduct.class);
+                    } catch (JsonSyntaxException e) {
+                        e.printStackTrace();
+                    }
 
-                            if (null != listProduct) {
-//                                if (pageNo == 1){
-//                                    products.clear();
-                                products.addAll(listProduct.getList());
-//                                } else {
-//
-//                                }
-                            } else {
-                                Toast.makeText(MainActivity.this, "数据有误，请稍后重试！", Toast.LENGTH_SHORT).show();
-                            }
+                    if (listProduct != null) {
+                        searchTotal = listProduct.getTotal();
+
+                        products.addAll(listProduct.getList());
+                        mAdapter.notifyDataSetChanged();
+
+                        if (searchTotal == 0){
+                            Toast.makeText(MainActivity.this, "产品列表为空，请检查！", Toast.LENGTH_SHORT).show();
                         }
+                    } else {
+                        Toast.makeText(MainActivity.this, "获取产品列表失败，请稍后重试！", Toast.LENGTH_SHORT).show();
+                    }
+                }
 
-                        @Override
-                        public void onError(Response<String> response) {
-                            super.onError(response);
+                @Override
+                public void onError(Response<String> response) {
+                    super.onError(response);
 
-                            Toast.makeText(MainActivity.this, "获取产品列表失败，请稍后重试！", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    Toast.makeText(MainActivity.this, "获取产品列表失败，请稍后重试！", Toast.LENGTH_SHORT).show();
+                }
+            });
         } catch (Exception e) {
             Toast.makeText(this, "网络异常，请稍后重试！", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
@@ -249,13 +271,13 @@ public class MainActivity extends AppCompatActivity {
             String[] search = searchResult.split(";");
 
             for (String result : search) {
-                String[] condition = result.split(":");
+                String[] condition = result.split(",");
                 switch (condition[0]) {
                     case "productname":
-                        searchProductName = condition[1];
+                        searchProductName = condition.length == 1 ? "" : condition[1];
                         break;
                     case "userid":
-                        searchUserName = condition[1];
+                        searchUserName = condition.length == 1 ? "" : condition[1];
                         break;
                     case "begindate":
                         searchBeginDate = condition[1];
@@ -267,6 +289,11 @@ public class MainActivity extends AppCompatActivity {
                         break;
                 }
             }
+
+            String strName = TextUtils.isEmpty(searchProductName) ? "" : (" 产品名：" + searchProductName);
+            String strUser = TextUtils.isEmpty(searchUserName) ? "" : (" 操作人：" + searchUserName);
+            tvSearchResult.setText("搜索结果：" + strName + strUser + "从" + searchBeginDate + "到" + searchEndDate);
+            llSearResult.setVisibility(View.VISIBLE);
 
             listProduct.refresh();
         }

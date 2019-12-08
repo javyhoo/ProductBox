@@ -49,8 +49,6 @@ public class ProductListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         viewHolderOne.tvName.setText(product.getName());
         viewHolderOne.tvUser.setText(product.getUserid());
 
-//        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-//        String createDate = formatter.format(new Date(product.getCreatedate()));
         viewHolderOne.tvDate.setText(product.getCreatedate());
 
 //                if (newsBean.getImg_list() != null && newsBean.getImg_list().size() > 0) {
